@@ -31,6 +31,7 @@ class Mlp:
         return np.sin(x/2)*np.cos(2*x)
     
     def forward(self, x):
+        #Testing
         # 1) Camada oculta
         net_in = self.vi + self.wi * x
         z_out = np.tanh(net_in)
