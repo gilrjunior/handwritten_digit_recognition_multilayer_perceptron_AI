@@ -12,12 +12,15 @@ targets_filename = "targets10.csv"
 training_file_path = os.path.join(current_dir, f"../../data/{inputs_filename}")
 targets_file_path = os.path.join(current_dir, f"../../data/{targets_filename}")
 
-def load_inputs(): 
+def load_inputs():
 
     # Carrega o arquivo
-    digit_9 = np.loadtxt(training_file_path)
+    inputs = np.loadtxt(training_file_path)
 
-    print(digit_9.shape)
+    print(inputs.shape)
+    print(inputs)
+
+    return inputs
 
 def load_targets(): 
     
@@ -26,3 +29,10 @@ def load_targets():
 
     print(targets)
     print(targets.shape)
+
+    return targets
+
+
+if __name__ == "__main__":
+    load_inputs()
+    load_targets()
