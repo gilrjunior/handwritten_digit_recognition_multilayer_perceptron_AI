@@ -18,12 +18,12 @@ class Mlp:
         self.vy = rd.uniform(-0.5, 0.5)
         self.wy = np.random.uniform(-0.5, 0.5, self.number_neurons)
 
-        self.inputs = self.get_inputs(x_min, x_max, sample_size)
+        self.inputs = self.get_inputs()
         self.targets = self.get_targets(self.inputs)
 
     def get_inputs(self, x_min, x_max, sample_size):
-        # Retorna um array 1D de amostras entre x_min e x_max
-        return np.linspace(x_min, x_max, sample_size)
+        
+        return np.loadtxt("data/digitostreinamento900.txt")
 
     def get_targets(self, x):
         # Gera os valores desejados (targets) para cada entrada
