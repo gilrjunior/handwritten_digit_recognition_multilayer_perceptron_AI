@@ -12,8 +12,7 @@ targets_filename = "targets10.csv"
 training_file_path = os.path.join(current_dir, f"../../data/{inputs_filename}")
 targets_file_path = os.path.join(current_dir, f"../../data/{targets_filename}")
 
-
-def load_inpust(): 
+def load_inputs(): 
 
     # Carrega o arquivo
     digit_9 = np.loadtxt(training_file_path)
@@ -23,6 +22,7 @@ def load_inpust():
 def load_targets(): 
     
     # Carrega o arquivo
-    targets = pd.read_csv(targets_file_path)
+    targets = pd.read_csv(targets_file_path, delimiter=";", header=None).to_numpy()
 
+    print(targets)
     print(targets.shape)

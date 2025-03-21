@@ -1,10 +1,9 @@
-from Mlp import *
+from handwritten_recognition.Mlp import *
+from handwritten_recognition.data_processing import *
 
 def main():
     
-    mlp = Mlp(200, 50, -1, 1, 0.01)
-
-    mlp.optimized_train(0.01)
+    load_targets()
 
 if __name__ == "__main__":
     main()
