@@ -1,35 +1,28 @@
 import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
+import handwritten_recognition.data_processing as dp
 
 class Mlp:
     def __init__(self, number_neurons, sample_size, x_min, x_max, learning_rate):
+
         self.number_neurons = number_neurons
-        self.sample_size = sample_size
-        self.x_min = x_min
-        self.x_max = x_max
         self.learning_rate = learning_rate
+        self.threshold = 0.00
+
+        # Carrega os dados
+        self.inputs = dp.load_inputs()
+        self.targets = dp.load_targets()
         
-        # Camada oculta: vi (bias) e wi (pesos) - cada um com shape (N,)
+        # Camada oculta: vi (bias) e wi (pesos) - cada um com shape
         self.vi = np.random.uniform(-0.5, 0.5, self.number_neurons)
-        self.wi = np.random.uniform(-0.5, 0.5, self.number_neurons)
+        self.wi = np.random.uniform(-0.5, 0.5, self.inputs.shape[1], self.number_neurons)
         
-        # Camada de saída: vy (bias) escalar e wy (pesos) com shape (N,)
-        self.vy = rd.uniform(-0.5, 0.5)
-        self.wy = np.random.uniform(-0.5, 0.5, self.number_neurons)
+        # Camada de saída: vy (bias) escalar e wy (pesos)
+        self.vy = np.random.uniform(-0.5, 0.5, self.targets.shape[1])
+        self.wy = np.random.uniform(-0.5, 0.5, self.number_neurons, self.targets.shape[1])
 
-        self.inputs = self.get_inputs()
-        self.targets = self.get_targets(self.inputs)
-
-    def get_inputs(self, x_min, x_max, sample_size):
-        
-        return np.loadtxt("data/digitostreinamento900.txt")
-
-    def get_targets(self, x):
-        # Gera os valores desejados (targets) para cada entrada
-        # f(x) = sin(x/2)*cos(2x)
-        return np.sin(x/2)*np.cos(2*x)
-    
+            
     def forward(self, x):
         #Testing
         # 1) Camada oculta
@@ -37,8 +30,14 @@ class Mlp:
         z_out = np.tanh(net_in)
 
         # 2) Camada de saída
-        yin = self.vy + np.dot(z_out,self.wy)
+        yin = self.vy + np.dot(z_out, self.wy)
+
+        # 3) Saída
         y = np.tanh(yin)
+
+        # Limiarização
+        y = np.where(y > self.threshold, 1, -1)
+
         return y
     
     def get_approximation(self):
@@ -47,7 +46,7 @@ class Mlp:
     
     def optimized_train(self, min_error):
         epochs = 0
-        number_entries = len(self.inputs)
+        number_entries = len(self.inputs.shape[0])
 
         while epochs <= 10000:
             epochs += 1
@@ -55,8 +54,12 @@ class Mlp:
 
             # Loop por amostra
             for i in range(number_entries):
+                
+                # Entrada
                 x = self.inputs[i]
-                t = self.targets[i]
+
+                # Saída desejada
+                t = self.targets[i%10]
 
                 # Feedforward
                 # net_in (shape: (N,)) = bias + peso * x
@@ -69,6 +72,9 @@ class Mlp:
                 sum_value = np.dot(z, self.wy)
                 yin = self.vy + sum_value
                 y = np.tanh(yin)
+
+                # Limiarização
+                y = np.where(y > self.threshold, 1, -1)
 
                 # Erro quadrático para essa amostra
                 sample_error = 0.5 * (t - y)**2

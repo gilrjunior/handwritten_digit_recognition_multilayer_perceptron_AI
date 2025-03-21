@@ -26,3 +26,5 @@ def load_targets():
 
     print(targets)
     print(targets.shape)
+
+    return targets
