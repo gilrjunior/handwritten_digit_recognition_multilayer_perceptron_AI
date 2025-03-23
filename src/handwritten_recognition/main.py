@@ -3,7 +3,7 @@ from handwritten_recognition.data_processing import *
 
 def main():
     
-    mlp =  Mlp(150, 0.1)
+    mlp =  Mlp(100, 0.01)
 
     mlp.optimized_train(0.01)
 

@@ -47,6 +47,14 @@ class Mlp:
     def optimized_train(self, min_error):
         epochs = 0
         number_entries = self.inputs.shape[0]
+        prev_epoch_error = float('inf')   # Erro da época anterior
+        prev_delta_bar = 0.0       # Média móvel dos deltas
+        
+        # Parâmetros de adaptação (conforme o artigo)
+        alpha = 0.1    # para a média móvel (0 < α ≤ 1)
+        theta = 0.5   # limiar para pequenas oscilações
+        u = 1.1        # fator de aumento (u > 1)
+        d = 0.5        # fator de diminuição (0 < d < 1)
 
         while epochs <= 100000:
             epochs += 1
@@ -70,19 +78,15 @@ class Mlp:
                 # Saída: soma ponderada + bias
                 # sum_value é escalar = z . wy
                 sum_value = self.wy @ z
-                # y = tanh(yin)
                 yin = self.vy + sum_value
                 y = 1.7159 * np.tanh((2.00/3.00) * yin)
 
-                # Limiarização
-                y_l = np.where(y > self.threshold, 1, -1)
-
                 # Erro quadrático para essa amostra
-                sample_error = 0.5 * np.sum((t - y_l)**2)
+                sample_error = 0.5 * np.sum((t - y)**2)
                 epoch_error += sample_error
 
                 # BACKPROPAGATION (cálculo dos gradientes)
-                delta_k = (t - y_l) * 1.7159 * (2.00/3.00) * (1 - np.tanh((2.00/3.00) * yin)**2) 
+                delta_k = (t - y) * 1.7159 * (2.00/3.00) * (1 - np.tanh((2.00/3.00) * yin)**2) 
 
                 # Camada de saída (oculta -> saída)
                 # gradiente dos pesos de saída
@@ -111,6 +115,21 @@ class Mlp:
 
             # Critério de parada
             print("Erro da época", epochs, ":", epoch_error)
+
+            if epoch_error != 0:
+                delta = (epoch_error - prev_epoch_error) / epoch_error
+
+            delta_bar = alpha * delta + (1 - alpha) * prev_delta_bar
+
+            # Regra principal para atualização da taxa de aprendizado:
+            if delta * prev_delta_bar < 0 and abs(prev_delta_bar) > theta:
+                self.learning_rate *= d
+            else:
+                self.learning_rate *= u
+
+            # Prepara para a próxima iteração
+            prev_delta_bar = delta_bar
+            prev_epoch_error = epoch_error
 
             if epoch_error <= min_error:
                 break
