@@ -22,6 +22,14 @@ class Mlp:
         self.vy = np.random.uniform(-0.5, 0.5, (self.targets.shape[1], 1))
         self.wy = np.random.uniform(-0.5, 0.5, (self.targets.shape[1], self.number_neurons))
 
+        # Supondo que self.targets tenha shape (10,10)
+        # num_samples = self.inputs.shape[0]  # 900
+        # # Cria um array de índices que se repete de 0 a 9
+        # indices = np.arange(num_samples) % 10
+        # # Expande os targets para ter 900 linhas, cada uma sendo o one-hot correto
+        # self.full_targets = self.targets[indices, :]  # shape (900, 10)
+        self.expanded_targets = self.targets[np.arange(self.inputs.shape[0]) % 10, :]
+
             
     def forward(self, x):
         #Testing
@@ -74,15 +82,15 @@ class Mlp:
                 yin = self.vy + sum_value
                 y = 1.7159 * np.tanh((2.00/3.00) * yin)
 
-                # Limiarização
-                y_l = np.where(y > self.threshold, 1, -1)
-
                 # Erro quadrático para essa amostra
-                sample_error = 0.5 * np.sum((t - y_l)**2)
+                sample_error = 0.5 * np.sum((t - y)**2)
                 epoch_error += sample_error
 
+                # Limiarização
+                # y_l = np.where(y > self.threshold, 1, -1)
+
                 # BACKPROPAGATION (cálculo dos gradientes)
-                delta_k = (t - y_l) * 1.7159 * (2.00/3.00) * (1 - np.tanh((2.00/3.00) * yin)**2) 
+                delta_k = (t - y) * 1.7159 * (2.00/3.00) * (1 - np.tanh((2.00/3.00) * yin)**2) 
 
                 # Camada de saída (oculta -> saída)
                 # gradiente dos pesos de saída
@@ -112,6 +120,65 @@ class Mlp:
             # Critério de parada
             print("Erro da época", epochs, ":", epoch_error)
 
+            if epoch_error <= min_error:
+                break
+
+        print("Treinamento finalizado em", epochs, "épocas.")
+
+    def batch_train(self, min_error, batch_size=32):
+        epochs = 0
+        number_entries = self.inputs.shape[0]
+
+        while epochs <= 100000:
+            epochs += 1
+            epoch_error = 0.0
+
+            # Embaralha os dados a cada época para evitar viés na formação dos mini-batches
+            indices = np.arange(number_entries)
+            np.random.shuffle(indices)
+            inputs_shuffled = self.inputs[indices]
+            targets_shuffled = self.expanded_targets[indices]
+
+            # Divide os dados em mini-batches
+            for start in range(0, number_entries, batch_size):
+                end = start + batch_size
+                # Transpõe para ter cada mini-batch com dimensão (features, batch_size)
+                batch_inputs = inputs_shuffled[start:end].T  
+                batch_targets = targets_shuffled[start:end].T  
+
+                # --- Feedforward ---
+                # Camada Oculta
+                net_in = self.vi + np.dot(self.wi, batch_inputs)  # (n_hidden, batch_size)
+                z = 1.7159 * np.tanh((2.0/3.0) * net_in)
+                
+                # Camada de Saída
+                yin = self.vy + np.dot(self.wy, z)  # (n_output, batch_size)
+                y = 1.7159 * np.tanh((2.0/3.0) * yin)
+                
+                # Cálculo do erro para o mini-batch
+                error = batch_targets - y
+                batch_error = 0.5 * np.sum(error**2)
+                epoch_error += batch_error
+
+                # --- Backpropagation ---
+                # Camada de Saída
+                delta_k = error * 1.7159 * (2.0/3.0) * (1 - np.tanh((2.0/3.0)*yin)**2)
+                delta_wy = self.learning_rate * np.dot(delta_k, z.T)  # (n_output, n_hidden)
+                delta_vy = self.learning_rate * np.sum(delta_k, axis=1, keepdims=True)  # (n_output, 1)
+
+                # Camada Oculta
+                delta_in = np.dot(self.wy.T, delta_k)  # (n_hidden, batch_size)
+                delta_j = delta_in * 1.7159 * (2.0/3.0) * (1 - np.tanh((2.0/3.0)*net_in)**2)
+                delta_wi = self.learning_rate * np.dot(delta_j, batch_inputs.T)  # (n_hidden, n_features)
+                delta_vi = self.learning_rate * np.sum(delta_j, axis=1, keepdims=True)  # (n_hidden, 1)
+
+                # Atualiza os pesos e vieses
+                self.wy += delta_wy
+                self.vy += delta_vy
+                self.wi += delta_wi
+                self.vi += delta_vi
+
+            print("Erro da época", epochs, ":", epoch_error)
             if epoch_error <= min_error:
                 break
 
