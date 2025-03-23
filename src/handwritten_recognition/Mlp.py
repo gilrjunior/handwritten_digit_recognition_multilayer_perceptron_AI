@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import handwritten_recognition.data_processing as dp
 
 class Mlp:
-    def __init__(self, number_neurons, sample_size, x_min, x_max, learning_rate):
+    def __init__(self, number_neurons, learning_rate):
 
         self.number_neurons = number_neurons
         self.learning_rate = learning_rate
@@ -15,18 +15,18 @@ class Mlp:
         self.targets = dp.load_targets()
         
         # Camada oculta: vi (bias) e wi (pesos) - cada um com shape
-        self.vi = np.random.uniform(-0.5, 0.5, self.number_neurons)
-        self.wi = np.random.uniform(-0.5, 0.5, self.inputs.shape[1], self.number_neurons)
+        self.vi = np.random.uniform(-0.5, 0.5, (self.number_neurons, 1))
+        self.wi = np.random.uniform(-0.5, 0.5, (self.number_neurons, self.inputs.shape[1]))
         
         # Camada de saída: vy (bias) escalar e wy (pesos)
-        self.vy = np.random.uniform(-0.5, 0.5, self.targets.shape[1])
-        self.wy = np.random.uniform(-0.5, 0.5, self.number_neurons, self.targets.shape[1])
+        self.vy = np.random.uniform(-0.5, 0.5, (self.targets.shape[1], 1))
+        self.wy = np.random.uniform(-0.5, 0.5, (self.targets.shape[1], self.number_neurons))
 
             
     def forward(self, x):
         #Testing
         # 1) Camada oculta
-        net_in = self.vi + self.wi * x
+        net_in = self.vi + np.dot(self.wi,x)
         z_out = np.tanh(net_in)
 
         # 2) Camada de saída
@@ -46,9 +46,9 @@ class Mlp:
     
     def optimized_train(self, min_error):
         epochs = 0
-        number_entries = len(self.inputs.shape[0])
+        number_entries = self.inputs.shape[0]
 
-        while epochs <= 10000:
+        while epochs <= 100000:
             epochs += 1
             epoch_error = 0.0
 
@@ -56,60 +56,62 @@ class Mlp:
             for i in range(number_entries):
                 
                 # Entrada
-                x = self.inputs[i]
+                x = self.inputs[i].reshape(-1, 1) 
 
                 # Saída desejada
-                t = self.targets[i%10]
+                t = self.targets[i%10].reshape(-1, 1)
 
                 # Feedforward
-                # net_in (shape: (N,)) = bias + peso * x
-                net_in = self.vi + self.wi * x
-                # z (shape: (N,)) = tanh(net_in)
-                z = np.tanh(net_in)
+                # Camada oculta: soma ponderada + bias            
+                sum_value = self.wi @ x 
+                net_in = self.vi + sum_value
+                z = 1.7159 * np.tanh((2.00/3.00) * net_in)
 
                 # Saída: soma ponderada + bias
                 # sum_value é escalar = z . wy
-                sum_value = np.dot(z, self.wy)
+                sum_value = self.wy @ z
+                # y = tanh(yin)
                 yin = self.vy + sum_value
-                y = np.tanh(yin)
+                y = 1.7159 * np.tanh((2.00/3.00) * yin)
 
                 # Limiarização
-                y = np.where(y > self.threshold, 1, -1)
+                y_l = np.where(y > self.threshold, 1, -1)
 
                 # Erro quadrático para essa amostra
-                sample_error = 0.5 * (t - y)**2
+                sample_error = 0.5 * np.sum((t - y_l)**2)
                 epoch_error += sample_error
 
                 # BACKPROPAGATION (cálculo dos gradientes)
-                # delta_k = (y - t) * derivada da tanh(yin)
-                delta_k = (t - y) * (1 - y**2)  # pois y = tanh(yin), deriv = (1 - tanh^2(yin))
+                delta_k = (t - y_l) * 1.7159 * (2.00/3.00) * (1 - np.tanh((2.00/3.00) * yin)**2) 
 
                 # Camada de saída (oculta -> saída)
-                # gradientes: delta_wy (shape: (N,)) e delta_vy (escalar)
-                delta_wy = self.learning_rate * delta_k * z
+                # gradiente dos pesos de saída
+                delta_wy = self.learning_rate * delta_k @ z.T
                 delta_vy = self.learning_rate * delta_k
 
                 # Atualização
                 self.wy += delta_wy
-                self.vy += delta_vy
+                self.vy += delta_vy  
 
                 # Camada oculta (entrada -> oculta)
                 # erro que chega a cada neurônio oculto j: delta_in_j = wy[j] * delta_k
-                delta_in = self.wy * delta_k  # shape: (N,)
-                # derivada da tanh(net_in[j]) = (1 - z[j]^2)
-                delta_j = delta_in * (1 - z**2)  # shape: (N,)
+                delta_in = self.wy.T @ delta_k
+                delta_j = delta_in * 1.7159 * (2.0/3.0) * (1 - np.tanh((2.0/3.0) * net_in)**2)
+
 
                 # gradiente dos pesos de entrada
                 # wi[j] recebe a correção: eta * delta_j[j] * x
-                delta_wi = self.learning_rate * delta_j * x  # shape: (N,)
+                delta_wi = self.learning_rate * delta_j @ x.T
                 # gradiente do bias
-                delta_vi = self.learning_rate * delta_j      # shape: (N,)
+                delta_vi = self.learning_rate * delta_j
 
                 # Atualiza
                 self.wi += delta_wi
                 self.vi += delta_vi
 
             # Critério de parada
+            print("Erro da época", epochs, ":", epoch_error)
+
             if epoch_error <= min_error:
                 break
 

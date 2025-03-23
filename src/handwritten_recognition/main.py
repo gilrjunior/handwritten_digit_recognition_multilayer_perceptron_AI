@@ -3,7 +3,9 @@ from handwritten_recognition.data_processing import *
 
 def main():
     
-    load_targets()
+    mlp =  Mlp(150, 0.1)
+
+    mlp.optimized_train(0.01)
 
 if __name__ == "__main__":
     main()
