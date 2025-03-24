@@ -5,13 +5,13 @@ print("\x1b[2J\x1b[1;1H")
 t=np.loadtxt('data/targets10.csv',delimiter=';',skiprows=0)
 
 #t=np.loadtxt('targest16.csv',delimiter=';',skiprows=0)
-vanterior=np.loadtxt('test/vnovo.csv', delimiter=';', skiprows=0)
-v0anterior=np.loadtxt('test/v0novo.csv', delimiter=';', skiprows=0)
-wanterior=np.loadtxt('test/wnovo.csv', delimiter=';', skiprows=0)
-w0anterior=np.loadtxt('test/w0novo.csv', delimiter=';', skiprows=0)
+vanterior=np.loadtxt('exp_neurons_100_lr_0.010000_act_tanh/vnovo.csv', delimiter=';', skiprows=0)
+v0anterior=np.loadtxt('exp_neurons_100_lr_0.010000_act_tanh/v0novo.csv', delimiter=';', skiprows=0)
+wanterior=np.loadtxt('exp_neurons_100_lr_0.010000_act_tanh/wnovo.csv', delimiter=';', skiprows=0)
+w0anterior=np.loadtxt('exp_neurons_100_lr_0.010000_act_tanh/w0novo.csv', delimiter=';', skiprows=0)
 
 # print(vanterior)
-# print(v0anterior)
+print(v0anterior)
 # print(wanterior)
 # print(w0anterior)
 
@@ -48,7 +48,7 @@ for m in range(10):
         xteste=np.loadtxt('data/'+nome)
         for m2 in range(vsai):
             for n2 in range(neur):
-                zin[0][n2]=np.dot(xteste,vanterior[:,n2])+v0anterior[n2][0]
+                zin[0][n2]=np.dot(xteste,vanterior[:,n2])+v0anterior[n2]
             z=np.tanh(zin)
             yin=np.dot(z,wanterior)+w0anterior
             y=np.tanh(yin)

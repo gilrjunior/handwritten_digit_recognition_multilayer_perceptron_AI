@@ -425,18 +425,18 @@ class Mlp:
         # Adapta os arrays para os formatos esperados pelo código de teste
 
         # vanterior deve ter shape (256, 100)
-        vanterior = self.wi  # Supondo que self.wi já esteja com shape (256, 100)
+        vanterior = self.wi.T  # Supondo que self.wi já esteja com shape (256, 100)
 
         # v0anterior deve ter shape (100, 1)
-        v0anterior = self.vi
+        v0anterior = self.vi.reshape(-1, 1)
         if v0anterior.ndim == 1:
             v0anterior = v0anterior.reshape(-1, 1)
 
         # wanterior deve ter shape (100, 10)
-        wanterior = self.wy  # Supondo que self.wy já esteja com shape (100, 10)
+        wanterior = self.wy.T  # Supondo que self.wy já esteja com shape (100, 10)
 
         # w0anterior deve ter shape (10, 1)
-        w0anterior = self.vy
+        w0anterior = self.vy.reshape(-1, 1)
         if w0anterior.ndim == 1:
             w0anterior = w0anterior.reshape(-1, 1)
 
